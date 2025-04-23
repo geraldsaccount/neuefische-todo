@@ -1,5 +1,7 @@
 package com.geraldsaccount.neuefische_todo.controller;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,13 +17,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.geraldsaccount.neuefische_todo.model.Task;
+import com.geraldsaccount.neuefische_todo.model.TaskStatus;
+import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD) // needed to reset mvc before each test
 public class TaskControllerTest {
+
+	@Autowired
+	private TaskRepo repo;
 
 	@Autowired
 	private MockMvc mvc;
@@ -31,241 +39,119 @@ public class TaskControllerTest {
 
 	@Test
 	void getTasks_returnsTasks_whenCalled() throws Exception {
-		mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated());
+		Task task = new Task("T1", "this should return", TaskStatus.DONE);
+		repo.save(task);
 
 		mvc.perform(get("/api/todo"))
 				.andExpect(status().isOk())
-				.andExpect(content().json("""
-						[
-							{
-								"description": "this should return",
-								"status": "OPEN"
-							}
-						]
-						"""));
+				.andExpect(content().json(objectMapper.writeValueAsString(List.of(task))));
 	}
 
 	@Test
 	void postTask_returnsTask_withValidDto() throws Exception {
+		TaskDTO dto = new TaskDTO("this should become a task", TaskStatus.IN_PROGRESS);
+		String jsonDto = objectMapper.writeValueAsString(dto);
+
 		mvc.perform(post("/api/todo")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
+				.content(jsonDto))
 				.andExpect(status().isCreated())
+				.andExpect(content().json(jsonDto))
 				.andExpect(jsonPath("$.id").isNotEmpty());
 	}
 
 	@Test
 	void postTask_returnsBadRequest_withInvalidDto() throws Exception {
+		TaskDTO dto = new TaskDTO(null, TaskStatus.IN_PROGRESS);
+
 		mvc.perform(post("/api/todo")
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"status": "OPEN"
-						}
-						"""))
+				.content(objectMapper.writeValueAsString(dto)))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
 	void getById_returnsNotFound_withInvalidId() throws Exception {
-		mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated());
+		Task task = new Task("T1", "should not be found", TaskStatus.OPEN);
+		repo.save(task);
 
-		mvc.perform(get("/api/todo/T1"))
+		mvc.perform(get("/api/todo/T2"))
 				.andExpect(status().isNotFound());
 	}
 
 	@Test
 	void getById_returnsTask_withValidId() throws Exception {
-		String response = mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+		Task task = new Task("T1", "should be found", TaskStatus.OPEN);
+		repo.save(task);
 
-		JsonNode node = objectMapper.readTree(response);
-		String id = node.get("id").asText();
-
-		mvc.perform(get("/api/todo/" + id))
+		mvc.perform(get("/api/todo/" + task.id()))
 				.andExpect(status().isOk())
-				.andExpect(content().json("""
-							{
-								"description": "this should return",
-								"status": "OPEN"
-							}
-						"""))
-				.andExpect(jsonPath("$.id").value(id));
+				.andExpect(content().json(objectMapper.writeValueAsString(task)));
 	}
 
 	@Test
 	void putTask_updatesTask_withValidData() throws Exception {
-		String response = mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+		Task task = new Task("T1", "text before", TaskStatus.OPEN);
+		repo.save(task);
 
-		JsonNode node = objectMapper.readTree(response);
-		String id = node.get("id").asText();
+		Task updatedTask = task
+				.withDescription("updated text")
+				.withStatus(TaskStatus.DONE);
 
-		mvc.perform(put("/api/todo/" + id)
+		String jsonUpdatedTask = objectMapper.writeValueAsString(updatedTask);
+		mvc.perform(put("/api/todo/" + task.id())
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"id": "temp",
-							"description": "updated text",
-							"status": "IN_PROGRESS"
-						}
-						""".replaceFirst("temp", id)))
+				.content(jsonUpdatedTask))
 				.andExpect(status().isOk())
-				.andExpect(content().json("""
-							{
-								"description": "updated text",
-								"status": "IN_PROGRESS"
-							}
-						"""))
-				.andExpect(jsonPath("$.id").value(id));
+				.andExpect(content().json(jsonUpdatedTask));
 	}
 
 	@Test
 	void putTask_returnsBadRequest_withMissingDescription() throws Exception {
-		String response = mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+		Task task = new Task("T1", "text before", TaskStatus.OPEN);
+		repo.save(task);
 
-		JsonNode node = objectMapper.readTree(response);
-		String id = node.get("id").asText();
+		Task invalidTask = task.withDescription("");
 
-		mvc.perform(put("/api/todo/" + id)
+		mvc.perform(put("/api/todo/" + task.id())
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"id": "temp",
-							"description": "",
-							"status": IN_PROGRESS
-						}
-						""".replaceFirst("temp", id)))
+				.content(objectMapper.writeValueAsString(invalidTask)))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
 	void putTask_returnsBadRequest_withMismatchingIds() throws Exception {
-		String response = mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+		Task task = new Task("T1", "text before", TaskStatus.OPEN);
+		repo.save(task);
+		repo.save(task.withId("T2"));
 
-		JsonNode node = objectMapper.readTree(response);
-		String id = node.get("id").asText();
+		Task invalidTask = task.withId("T2");
 
-		mvc.perform(put("/api/todo/" + id)
+		mvc.perform(put("/api/todo/" + task.id())
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"id": "T1",
-							"description": "updated text",
-							"status": IN_PROGRESS
-						}
-						"""))
+				.content(objectMapper.writeValueAsString(invalidTask)))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void putTask_returnsNotFound_withInvalidID() throws Exception {
-		mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"description": "this should return",
-							"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated());
+	void putTask_returnsBadRequest_withInvalidID() throws Exception {
+		Task task = new Task("T1", "text before", TaskStatus.OPEN);
+		repo.save(task);
 
-		String invalidId = "T1";
+		Task invalidTask = task.withId("T2");
 
-		mvc.perform(put("/api/todo/" + invalidId)
+		mvc.perform(put("/api/todo/" + invalidTask.id())
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-							"id": "temp",
-							"description": "",
-							"status": IN_PROGRESS
-						}
-						""".replaceFirst("temp", invalidId)))
+				.content(objectMapper.writeValueAsString(invalidTask)))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
 	void deleteTask_returnsOk_withValidId() throws Exception {
-		String response = mvc.perform(post("/api/todo")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-						"description": "this should return",
-						"status": "OPEN"
-						}
-						"""))
-				.andExpect(status().isCreated())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+		Task task = new Task("T1", "to be deleted", TaskStatus.OPEN);
+		repo.save(task);
 
-		JsonNode node = objectMapper.readTree(response);
-		String id = node.get("id").asText();
-
-		mvc.perform(delete("/api/todo/" + id))
+		mvc.perform(delete("/api/todo/" + task.id()))
 				.andExpect(status().isNoContent());
 	}
 

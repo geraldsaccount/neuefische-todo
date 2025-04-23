@@ -41,8 +41,9 @@ public class TaskService {
 	}
 
 	public Optional<Task> updateTask(String id, Task requestedTask) {
-		if (id == null || requestedTask == null ||
-				!id.equals(requestedTask.id()) || requestedTask.description() == null) {
+		if (id == null || requestedTask == null
+				|| !id.equals(requestedTask.id()) || requestedTask.description() == null
+				|| requestedTask.description().isEmpty() || requestedTask.description().isBlank()) {
 			return Optional.empty();
 		}
 		if (!repo.existsById(id)) {
@@ -54,8 +55,8 @@ public class TaskService {
 	}
 
 	public Boolean delete(String id) {
-		if (id == null || id.isEmpty() ||
-				!repo.existsById(id)) {
+		if (id == null || id.isEmpty()
+				|| !repo.existsById(id)) {
 			return false;
 		}
 
