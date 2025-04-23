@@ -88,7 +88,7 @@ public class TaskServiceTest {
 	@Test
 	void updateTask_updates_withValidData() {
 		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
-		when(repo.existsById(task.id())).thenReturn(true);
+		when(repo.findById(task.id())).thenReturn(Optional.of(task));
 
 		Task requestedtask = task.withDescription("updated text")
 				.withStatus(TaskStatus.DONE);
@@ -104,7 +104,7 @@ public class TaskServiceTest {
 	@Test
 	void updateTask_stopsProcess_withInvalidId() {
 		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
-		when(repo.existsById("T2")).thenReturn(false);
+		when(repo.findById("T2")).thenReturn(Optional.empty());
 
 		Task requestedtask = task.withDescription("updated text")
 				.withStatus(TaskStatus.DONE);
@@ -122,7 +122,7 @@ public class TaskServiceTest {
 		assertThat(service.updateTask("T2", requestedtask))
 				.isEmpty();
 
-		verify(repo, never()).existsById(any());
+		verify(repo, never()).findById(any());
 		verify(repo, never()).save(any());
 	}
 
@@ -133,14 +133,15 @@ public class TaskServiceTest {
 		assertThat(service.updateTask("T2", requestedtask))
 				.isEmpty();
 
-		verify(repo, never()).existsById(any());
+		verify(repo, never()).findById(any());
 		verify(repo, never()).save(any());
 	}
 
 	@Test
 	void deleteTask_deletes_withValidId() {
 		String id = "T1";
-		when(repo.existsById(id)).thenReturn(true);
+		Task mockTask = mock(Task.class);
+		when(repo.findById(id)).thenReturn(Optional.of(mockTask));
 
 		assertThat(service.delete(id)).isTrue();
 

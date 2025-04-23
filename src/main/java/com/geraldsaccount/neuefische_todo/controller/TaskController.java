@@ -63,4 +63,19 @@ public class TaskController {
 				? ResponseEntity.noContent().build() // 204 No Content
 				: ResponseEntity.notFound().build(); // 404 Not Found
 	}
+
+	@GetMapping("/undo")
+	public ResponseEntity<Void> undo() {
+		return service.undo()
+				? ResponseEntity.accepted().build()
+				: ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/redo")
+	public ResponseEntity<Void> redo() {
+		return service.redo()
+				? ResponseEntity.accepted().build()
+				: ResponseEntity.noContent().build();
+	}
+
 }
