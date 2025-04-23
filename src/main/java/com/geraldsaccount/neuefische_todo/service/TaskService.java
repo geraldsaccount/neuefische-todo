@@ -54,8 +54,13 @@ public class TaskService {
 	}
 
 	public Boolean delete(String id) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'delete'");
+		if (id == null || id.isEmpty() ||
+				!repo.existsById(id)) {
+			return false;
+		}
+
+		repo.deleteById(id);
+		return true;
 	}
 
 }

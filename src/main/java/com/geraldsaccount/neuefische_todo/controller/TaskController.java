@@ -3,6 +3,7 @@ package com.geraldsaccount.neuefische_todo.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,5 +52,12 @@ public class TaskController {
 		return service.updateTask(id, requestedTask)
 				.map(t -> ResponseEntity.ok(t))
 				.orElse(ResponseEntity.badRequest().build());
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Boolean> deleteTask(@PathVariable String id) {
+		return service.delete(id)
+				? ResponseEntity.ok().build()
+				: ResponseEntity.notFound().build();
 	}
 }

@@ -152,7 +152,7 @@ public class TaskServiceTest {
 		String invalidId = "T1";
 		when(repo.existsById(invalidId)).thenReturn(false);
 
-		assertThat(service.delete(invalidId)).isTrue();
+		assertThat(service.delete(invalidId)).isFalse();
 
 		verify(repo, never()).deleteById(any());
 	}

@@ -2,6 +2,6 @@ package com.geraldsaccount.neuefische_todo.model;
 
 public enum TaskStatus {
 	OPEN,
-	DOING,
+	IN_PROGRESS,
 	DONE;
 }
