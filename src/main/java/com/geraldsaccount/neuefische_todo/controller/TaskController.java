@@ -32,6 +32,7 @@ public class TaskController {
 	}
 
 	@PostMapping
+	@SuppressWarnings("unused")
 	private ResponseEntity<Task> postTask(@RequestBody final TaskDTO dto) {
 		return service.createTask(dto)
 				.map(t -> ResponseEntity.ok(t))
