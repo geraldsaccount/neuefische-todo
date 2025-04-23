@@ -23,8 +23,17 @@ public class TaskService {
 		return repo.findAll();
 	}
 
-	public Optional<Task> createTask(TaskDTO dto) {
-		return Optional.empty();
+	public Optional<Task> createTask(TaskDTO template) {
+		if (template == null || template.description() == null
+				|| template.description().isEmpty() || template.description().isBlank()) {
+			return Optional.empty();
+		}
+
+		Task newTask = Task.of(template)
+				.withId(idService.generateId());
+
+		repo.save(newTask);
+		return Optional.of(newTask);
 	}
 
 }
