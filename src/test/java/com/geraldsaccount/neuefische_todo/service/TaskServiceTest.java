@@ -20,6 +20,7 @@ public class TaskServiceTest {
 	private IdService idService;
 
 	@BeforeEach
+	@SuppressWarnings("unused")
 	void setUp() {
 		repo = mock(TaskRepo.class);
 		idService = mock(IdService.class);

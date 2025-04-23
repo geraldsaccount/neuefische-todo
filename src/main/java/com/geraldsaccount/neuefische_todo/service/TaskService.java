@@ -18,7 +18,7 @@ public class TaskService {
 	}
 
 	public List<Task> getTasks() {
-		return null;
+		return repo.findAll();
 	}
 
 }
