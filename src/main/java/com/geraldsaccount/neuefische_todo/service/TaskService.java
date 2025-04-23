@@ -36,8 +36,8 @@ public class TaskService {
 		return Optional.of(newTask);
 	}
 
-	public Optional<Task> getById(String invalidId) {
-		return Optional.empty();
+	public Optional<Task> getById(String id) {
+		return repo.findById(id);
 	}
 
 }
