@@ -53,4 +53,9 @@ public class TaskService {
 		return Optional.of(requestedTask);
 	}
 
+	public Boolean delete(String id) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'delete'");
+	}
+
 }
