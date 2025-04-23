@@ -10,7 +10,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -19,6 +23,9 @@ public class TaskControllerTest {
 
 	@Autowired
 	private MockMvc mvc;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	@Test
 	void getTasks_returnsTasks_whenCalled() throws Exception {
@@ -54,7 +61,8 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk());
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").isNotEmpty());
 	}
 
 	@Test
@@ -67,5 +75,50 @@ public class TaskControllerTest {
 						}
 						"""))
 				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void getById_returnsBadRequest_withInvalidId() throws Exception {
+		mvc.perform(post("/api/todo")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+							"description": "this should return",
+							"status": "OPEN"
+						}
+						"""))
+				.andExpect(status().isOk());
+
+		mvc.perform(get("/api/todo/T1"))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void getById_returnsTask_withValidId() throws Exception {
+		String response = mvc.perform(post("/api/todo")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+							"description": "this should return",
+							"status": "OPEN"
+						}
+						"""))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+		JsonNode node = objectMapper.readTree(response);
+		String id = node.get("id").asText();
+
+		mvc.perform(get("/api/todo/" + id))
+				.andExpect(status().isOk())
+				.andExpect(content().json("""
+							{
+								"description": "this should return",
+								"status": "OPEN"
+							}
+						"""))
+				.andExpect(jsonPath("$.id").value(id));
 	}
 }

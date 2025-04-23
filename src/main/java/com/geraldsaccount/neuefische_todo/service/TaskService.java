@@ -36,4 +36,8 @@ public class TaskService {
 		return Optional.of(newTask);
 	}
 
+	public Optional<Task> getById(String invalidId) {
+		return Optional.empty();
+	}
+
 }
