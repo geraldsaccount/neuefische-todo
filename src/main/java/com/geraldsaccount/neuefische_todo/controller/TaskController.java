@@ -1,5 +1,6 @@
 package com.geraldsaccount.neuefische_todo.controller;
 
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -43,7 +44,9 @@ public class TaskController {
 	@SuppressWarnings("unused")
 	private ResponseEntity<Task> postTask(@RequestBody final TaskDTO dto) {
 		return service.createTask(dto)
-				.map(t -> ResponseEntity.ok(t))
+				.map(t -> ResponseEntity
+						.created(URI.create("/api/todo/" + t.id()))
+						.body(t))
 				.orElse(ResponseEntity.badRequest().build());
 	}
 
@@ -57,7 +60,7 @@ public class TaskController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Boolean> deleteTask(@PathVariable String id) {
 		return service.delete(id)
-				? ResponseEntity.ok().build()
-				: ResponseEntity.notFound().build();
+				? ResponseEntity.noContent().build() // 204 No Content
+				: ResponseEntity.notFound().build(); // 404 Not Found
 	}
 }
