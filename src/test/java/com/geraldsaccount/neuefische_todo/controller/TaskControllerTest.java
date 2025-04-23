@@ -148,14 +148,14 @@ public class TaskControllerTest {
 						{
 							"id": "temp",
 							"description": "updated text",
-							"status": "DOING"
+							"status": "IN_PROGRESS"
 						}
 						""".replaceFirst("temp", id)))
 				.andExpect(status().isOk())
 				.andExpect(content().json("""
 							{
 								"description": "updated text",
-								"status": "DOING"
+								"status": "IN_PROGRESS"
 							}
 						"""))
 				.andExpect(jsonPath("$.id").value(id));
@@ -185,7 +185,7 @@ public class TaskControllerTest {
 						{
 							"id": "temp",
 							"description": "",
-							"status": DOING
+							"status": IN_PROGRESS
 						}
 						""".replaceFirst("temp", id)))
 				.andExpect(status().isBadRequest());
@@ -215,7 +215,7 @@ public class TaskControllerTest {
 						{
 							"id": "T1",
 							"description": "updated text",
-							"status": DOING
+							"status": IN_PROGRESS
 						}
 						"""))
 				.andExpect(status().isBadRequest());
@@ -241,7 +241,7 @@ public class TaskControllerTest {
 						{
 							"id": "temp",
 							"description": "",
-							"status": DOING
+							"status": IN_PROGRESS
 						}
 						""".replaceFirst("temp", invalidId)))
 				.andExpect(status().isBadRequest());
