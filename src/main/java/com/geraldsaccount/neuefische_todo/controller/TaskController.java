@@ -34,7 +34,7 @@ public class TaskController {
 	public ResponseEntity<Task> getById(@PathVariable String id) {
 		return service.getById(id)
 				.map(t -> ResponseEntity.ok(t))
-				.orElse(ResponseEntity.badRequest().build());
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping

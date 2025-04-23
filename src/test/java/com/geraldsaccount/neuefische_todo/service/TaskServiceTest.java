@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,5 +83,57 @@ public class TaskServiceTest {
 		when(repo.findById(task.id())).thenReturn(Optional.of(task));
 
 		assertThat(service.getById(task.id())).contains(task);
+	}
+
+	@Test
+	void updateTask_updates_withValidData() {
+		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
+		when(repo.existsById(task.id())).thenReturn(true);
+
+		Task requestedtask = task.withDescription("updated text")
+				.withStatus(TaskStatus.DONE);
+
+		assertThat(service.updateTask(task.id(), requestedtask))
+				.isNotEmpty()
+				.hasValue(requestedtask);
+
+		verify(repo, times(1))
+				.save(requestedtask);
+	}
+
+	@Test
+	void updateTask_stopsProcess_withInvalidId() {
+		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
+		when(repo.existsById("T2")).thenReturn(false);
+
+		Task requestedtask = task.withDescription("updated text")
+				.withStatus(TaskStatus.DONE);
+
+		assertThat(service.updateTask("T2", requestedtask))
+				.isEmpty();
+
+		verify(repo, never()).save(any());
+	}
+
+	@Test
+	void updateTask_stopsProcess_withEmptyDescription() {
+		Task requestedtask = new Task("T1", "", TaskStatus.OPEN);
+
+		assertThat(service.updateTask("T2", requestedtask))
+				.isEmpty();
+
+		verify(repo, never()).existsById(any());
+		verify(repo, never()).save(any());
+	}
+
+	@Test
+	void updateTask_stopsProcess_withMisMatchingId() {
+		Task requestedtask = new Task("T1", "initial text", TaskStatus.OPEN);
+
+		assertThat(service.updateTask("T2", requestedtask))
+				.isEmpty();
+
+		verify(repo, never()).existsById(any());
+		verify(repo, never()).save(any());
 	}
 }
