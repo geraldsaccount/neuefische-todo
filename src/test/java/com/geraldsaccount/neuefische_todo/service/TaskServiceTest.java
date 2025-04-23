@@ -2,6 +2,7 @@ package com.geraldsaccount.neuefische_todo.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,5 +66,21 @@ public class TaskServiceTest {
 
 		verify(idService, never()).generateId();
 		verify(repo, never()).save(any());
+	}
+
+	@Test
+	void getById_returnsEmpty_withInvalidId() {
+		String invalidId = "T1";
+		when(repo.findById(invalidId)).thenReturn(Optional.empty());
+
+		assertThat(service.getById(invalidId)).isEmpty();
+	}
+
+	@Test
+	void getById_returnsTask_withValidId() {
+		Task task = new Task("T1", "Test getting tasks by id", TaskStatus.OPEN);
+		when(repo.findById(task.id())).thenReturn(Optional.of(task));
+
+		assertThat(service.getById(task.id())).contains(task);
 	}
 }
