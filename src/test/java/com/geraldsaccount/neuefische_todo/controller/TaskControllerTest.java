@@ -39,7 +39,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 
 		mvc.perform(get("/api/todo"))
 				.andExpect(status().isOk())
@@ -63,7 +63,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.id").isNotEmpty());
 	}
 
@@ -89,7 +89,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 
 		mvc.perform(get("/api/todo/T1"))
 				.andExpect(status().isNotFound());
@@ -105,7 +105,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andReturn()
 				.getResponse()
 				.getContentAsString();
@@ -134,7 +134,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andReturn()
 				.getResponse()
 				.getContentAsString();
@@ -171,7 +171,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andReturn()
 				.getResponse()
 				.getContentAsString();
@@ -201,7 +201,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andReturn()
 				.getResponse()
 				.getContentAsString();
@@ -231,7 +231,7 @@ public class TaskControllerTest {
 							"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 
 		String invalidId = "T1";
 
@@ -257,7 +257,7 @@ public class TaskControllerTest {
 						"status": "OPEN"
 						}
 						"""))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andReturn()
 				.getResponse()
 				.getContentAsString();
@@ -266,7 +266,7 @@ public class TaskControllerTest {
 		String id = node.get("id").asText();
 
 		mvc.perform(delete("/api/todo/" + id))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
 	}
 
 	@Test
