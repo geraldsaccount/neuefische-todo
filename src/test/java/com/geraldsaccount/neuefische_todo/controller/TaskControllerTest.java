@@ -42,4 +42,28 @@ public class TaskControllerTest {
 						"""));
 	}
 
+	@Test
+	void postTask_returnsTask_withValidDto() throws Exception {
+		mvc.perform(post("api/todo")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+							"description": "this should return",
+							"status": "OPEN"
+						}
+						"""))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	void postTask_returnsBadRequest_withInvalidDto() throws Exception {
+		mvc.perform(post("api/todo")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+							"status": "OPEN"
+						}
+						"""))
+				.andExpect(status().isBadRequest());
+	}
 }
