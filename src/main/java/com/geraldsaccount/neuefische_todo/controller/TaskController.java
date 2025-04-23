@@ -26,9 +26,7 @@ public class TaskController {
 	@SuppressWarnings("unused")
 	private ResponseEntity<List<Task>> getTasks() {
 		List<Task> tasks = service.getTasks();
-		return tasks.isEmpty()
-				? ResponseEntity.noContent().build()
-				: ResponseEntity.ok(tasks);
+		return ResponseEntity.ok(tasks);
 	}
 
 	@PostMapping
