@@ -53,4 +53,14 @@ public class TaskService {
 		return Optional.of(requestedTask);
 	}
 
+	public Boolean delete(String id) {
+		if (id == null || id.isEmpty() ||
+				!repo.existsById(id)) {
+			return false;
+		}
+
+		repo.deleteById(id);
+		return true;
+	}
+
 }

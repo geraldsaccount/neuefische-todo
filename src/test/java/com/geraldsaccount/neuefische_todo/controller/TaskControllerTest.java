@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -147,14 +148,14 @@ public class TaskControllerTest {
 						{
 							"id": "temp",
 							"description": "updated text",
-							"status": "DOING"
+							"status": "IN_PROGRESS"
 						}
 						""".replaceFirst("temp", id)))
 				.andExpect(status().isOk())
 				.andExpect(content().json("""
 							{
 								"description": "updated text",
-								"status": "DOING"
+								"status": "IN_PROGRESS"
 							}
 						"""))
 				.andExpect(jsonPath("$.id").value(id));
@@ -184,7 +185,7 @@ public class TaskControllerTest {
 						{
 							"id": "temp",
 							"description": "",
-							"status": DOING
+							"status": IN_PROGRESS
 						}
 						""".replaceFirst("temp", id)))
 				.andExpect(status().isBadRequest());
@@ -214,7 +215,7 @@ public class TaskControllerTest {
 						{
 							"id": "T1",
 							"description": "updated text",
-							"status": DOING
+							"status": IN_PROGRESS
 						}
 						"""))
 				.andExpect(status().isBadRequest());
@@ -240,9 +241,37 @@ public class TaskControllerTest {
 						{
 							"id": "temp",
 							"description": "",
-							"status": DOING
+							"status": IN_PROGRESS
 						}
 						""".replaceFirst("temp", invalidId)))
 				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void deleteTask_returnsOk_withValidId() throws Exception {
+		String response = mvc.perform(post("/api/todo")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+						"description": "this should return",
+						"status": "OPEN"
+						}
+						"""))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+		JsonNode node = objectMapper.readTree(response);
+		String id = node.get("id").asText();
+
+		mvc.perform(delete("/api/todo/" + id))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	void deleteTask_returnsNotFound_withInvalidId() throws Exception {
+		mvc.perform(delete("/api/todo/T1"))
+				.andExpect(status().isNotFound());
 	}
 }

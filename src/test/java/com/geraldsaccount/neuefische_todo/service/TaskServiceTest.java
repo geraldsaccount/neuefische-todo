@@ -136,4 +136,24 @@ public class TaskServiceTest {
 		verify(repo, never()).existsById(any());
 		verify(repo, never()).save(any());
 	}
+
+	@Test
+	void deleteTask_deletes_withValidId() {
+		String id = "T1";
+		when(repo.existsById(id)).thenReturn(true);
+
+		assertThat(service.delete(id)).isTrue();
+
+		verify(repo, times(1)).deleteById(id);
+	}
+
+	@Test
+	void deleteTask_stopsProcess_withInvalidId() {
+		String invalidId = "T1";
+		when(repo.existsById(invalidId)).thenReturn(false);
+
+		assertThat(service.delete(invalidId)).isFalse();
+
+		verify(repo, never()).deleteById(any());
+	}
 }
