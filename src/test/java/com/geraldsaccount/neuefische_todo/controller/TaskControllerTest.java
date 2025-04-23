@@ -145,13 +145,11 @@ public class TaskControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
-							"id": """ + id + ","
-						+
-						"""
-										"description": "updated text",
-										"status": DOING
-									}
-								"""))
+							"id": "temp",
+							"description": "updated text",
+							"status": "DOING"
+						}
+						""".replaceFirst("temp", id)))
 				.andExpect(status().isOk())
 				.andExpect(content().json("""
 							{
@@ -184,13 +182,11 @@ public class TaskControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
-							"id": """ + id + ","
-						+
-						"""
-										"description": "",
-										"status": DOING
-									}
-								"""))
+							"id": "temp",
+							"description": "",
+							"status": DOING
+						}
+						""".replaceFirst("temp", id)))
 				.andExpect(status().isBadRequest());
 	}
 
@@ -242,13 +238,11 @@ public class TaskControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
-							"id": """ + invalidId + ","
-						+
-						"""
-										"description": "",
-										"status": DOING
-									}
-								"""))
+							"id": "temp",
+							"description": "",
+							"status": DOING
+						}
+						""".replaceFirst("temp", invalidId)))
 				.andExpect(status().isBadRequest());
 	}
 }

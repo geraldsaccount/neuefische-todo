@@ -40,9 +40,17 @@ public class TaskService {
 		return repo.findById(id);
 	}
 
-	public Optional<Task> updateTask(String id, Task requestedtask) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'updateTask'");
+	public Optional<Task> updateTask(String id, Task requestedTask) {
+		if (id == null || requestedTask == null ||
+				!id.equals(requestedTask.id()) || requestedTask.description() == null) {
+			return Optional.empty();
+		}
+		if (!repo.existsById(id)) {
+			return Optional.empty();
+		}
+
+		repo.save(requestedTask);
+		return Optional.of(requestedTask);
 	}
 
 }
