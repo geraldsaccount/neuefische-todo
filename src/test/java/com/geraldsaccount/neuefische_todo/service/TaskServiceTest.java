@@ -15,9 +15,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.geraldsaccount.neuefische_todo.model.Task;
-import com.geraldsaccount.neuefische_todo.model.TaskStatus;
-import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.openai.OpenAiException;
+import com.geraldsaccount.neuefische_todo.model.tasks.Task;
+import com.geraldsaccount.neuefische_todo.model.tasks.TaskStatus;
+import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 
 public class TaskServiceTest {
@@ -25,13 +26,15 @@ public class TaskServiceTest {
 
 	private TaskRepo repo;
 	private IdService idService;
+	private CorrectionService correctionService;
 
 	@BeforeEach
 	@SuppressWarnings("unused")
 	void setUp() {
 		repo = mock(TaskRepo.class);
 		idService = mock(IdService.class);
-		service = new TaskService(repo, idService);
+		correctionService = mock(CorrectionService.class);
+		service = new TaskService(repo, idService, correctionService);
 	}
 
 	@Test
@@ -46,10 +49,14 @@ public class TaskServiceTest {
 	}
 
 	@Test
-	void createTask_returnsTask_withValidDto() {
+	void createTask_returnsTask_withValidDto() throws OpenAiException {
 		String id = "T1";
 		TaskDTO dto = new TaskDTO("Test postin", TaskStatus.OPEN);
 		when(idService.generateId()).thenReturn(id);
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
 
 		Task expected = Task.of(dto).withId(id);
 		assertThat(service.createTask(dto))
@@ -90,9 +97,13 @@ public class TaskServiceTest {
 	}
 
 	@Test
-	void updateTask_updates_withValidData() throws TodoNotFoundException {
+	void updateTask_updates_withValidData() throws TodoNotFoundException, OpenAiException {
 		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
 		when(repo.existsById(task.id())).thenReturn(true);
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
 
 		Task requestedtask = task.withDescription("updated text")
 				.withStatus(TaskStatus.DONE);
@@ -105,7 +116,7 @@ public class TaskServiceTest {
 	}
 
 	@Test
-	void updateTask_throwsIllegalArgument_withInvalidId() {
+	void updateTask_throwsIllegalArgument_withInvalidId() throws OpenAiException {
 		String invalidId = "T2";
 		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
 		when(repo.existsById(invalidId)).thenReturn(false);
@@ -117,11 +128,12 @@ public class TaskServiceTest {
 				.isExactlyInstanceOf(IllegalArgumentException.class)
 				.hasMessage("Cannot update todo. Missing informations.");
 
+		verify(correctionService, never()).getCorrectedText(any());
 		verify(repo, never()).save(any());
 	}
 
 	@Test
-	void updateTask_throwsIllegalArgument_withEmptyDescription() {
+	void updateTask_throwsIllegalArgument_withEmptyDescription() throws OpenAiException {
 		Task requestedtask = new Task("T1", "", TaskStatus.OPEN);
 
 		assertThatThrownBy(() -> service.updateTask("T2", requestedtask))
@@ -130,18 +142,20 @@ public class TaskServiceTest {
 
 		assertThatThrownBy(() -> service.updateTask("T2", requestedtask));
 
+		verify(correctionService, never()).getCorrectedText(any());
 		verify(repo, never()).existsById(any());
 		verify(repo, never()).save(any());
 	}
 
 	@Test
-	void updateTask_throwsIllegalArgument_withMisMatchingId() {
+	void updateTask_throwsIllegalArgument_withMisMatchingId() throws OpenAiException {
 		Task requestedtask = new Task("T1", "initial text", TaskStatus.OPEN);
 
 		assertThatThrownBy(() -> service.updateTask("T2", requestedtask))
 				.isExactlyInstanceOf(IllegalArgumentException.class)
 				.hasMessage("Cannot update todo. Missing informations.");
 
+		verify(correctionService, never()).getCorrectedText(any());
 		verify(repo, never()).existsById(any());
 		verify(repo, never()).save(any());
 	}

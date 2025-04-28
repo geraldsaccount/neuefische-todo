@@ -1,8 +1,8 @@
-package com.geraldsaccount.neuefische_todo.model;
+package com.geraldsaccount.neuefische_todo.model.tasks;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 
 import lombok.With;
 

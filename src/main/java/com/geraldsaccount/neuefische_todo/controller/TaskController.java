@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.geraldsaccount.neuefische_todo.model.Task;
-import com.geraldsaccount.neuefische_todo.model.dto.ErrorDTO;
-import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.error.ErrorDTO;
+import com.geraldsaccount.neuefische_todo.model.tasks.Task;
+import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.service.TaskService;
 import com.geraldsaccount.neuefische_todo.service.TodoNotFoundException;
 

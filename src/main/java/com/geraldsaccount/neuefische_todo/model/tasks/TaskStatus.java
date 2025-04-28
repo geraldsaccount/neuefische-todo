@@ -1,4 +1,4 @@
-package com.geraldsaccount.neuefische_todo.model;
+package com.geraldsaccount.neuefische_todo.model.tasks;
 
 public enum TaskStatus {
 	OPEN,
