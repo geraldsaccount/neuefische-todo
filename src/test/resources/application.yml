@@ -6,5 +6,5 @@ de:
 
 servers:
   openai:
-    uri: https://api.openai.com/v1/responses
+    uri: /v1/responses
     key: test-key
