@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: neuefische-todo
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+servers:
+  openai:
+    uri: https://api.openai.com/v1/responses
+    key: ${OPENAI_KEY}

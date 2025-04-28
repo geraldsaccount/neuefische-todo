@@ -1,0 +1,10 @@
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 7.0.4
+
+servers:
+  openai:
+    uri: https://api.openai.com/v1/responses
+    key: test-key
