@@ -1,21 +1,25 @@
 package com.geraldsaccount.neuefische_todo.controller;
 
-import java.net.URI;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.geraldsaccount.neuefische_todo.model.Task;
+import com.geraldsaccount.neuefische_todo.model.dto.ErrorDTO;
 import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.service.TaskService;
+import com.geraldsaccount.neuefische_todo.service.TodoNotFoundException;
 
 @RestController
 @RequestMapping("/api/todo")
@@ -34,33 +38,31 @@ public class TaskController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Task> getById(@PathVariable String id) {
-		return service.getById(id)
-				.map(t -> ResponseEntity.ok(t))
-				.orElse(ResponseEntity.notFound().build());
+	public Task getById(@PathVariable String id) throws TodoNotFoundException {
+		return service.getById(id);
 	}
 
 	@PostMapping
 	@SuppressWarnings("unused")
-	private ResponseEntity<Task> postTask(@RequestBody final TaskDTO dto) {
-		return service.createTask(dto)
-				.map(t -> ResponseEntity
-						.created(URI.create("/api/todo/" + t.id()))
-						.body(t))
-				.orElse(ResponseEntity.badRequest().build());
+	private Task postTask(@RequestBody final TaskDTO dto) {
+		return service.createTask(dto);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<Task> putUpdateTask(@PathVariable String id, @RequestBody Task requestedTask) {
-		return service.updateTask(id, requestedTask)
-				.map(t -> ResponseEntity.ok(t))
-				.orElse(ResponseEntity.badRequest().build());
+	public Task putUpdateTask(@PathVariable String id, @RequestBody Task requestedTask)
+			throws TodoNotFoundException {
+		return service.updateTask(id, requestedTask);
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Boolean> deleteTask(@PathVariable String id) {
-		return service.delete(id)
-				? ResponseEntity.noContent().build() // 204 No Content
-				: ResponseEntity.notFound().build(); // 404 Not Found
+	public ResponseEntity<Void> deleteTask(@PathVariable String id) throws TodoNotFoundException {
+		service.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@ExceptionHandler(TodoNotFoundException.class)
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	public ErrorDTO handleTodoNotFoundException(TodoNotFoundException e) {
+		return new ErrorDTO(HttpStatus.NOT_FOUND, e.getMessage());
 	}
 }

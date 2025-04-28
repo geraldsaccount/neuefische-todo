@@ -1,7 +1,6 @@
 package com.geraldsaccount.neuefische_todo.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -23,45 +22,45 @@ public class TaskService {
 		return repo.findAll();
 	}
 
-	public Optional<Task> createTask(TaskDTO template) {
+	public Task createTask(TaskDTO template) {
 		if (template == null || template.description() == null
 				|| template.description().isEmpty() || template.description().isBlank()) {
-			return Optional.empty();
+			throw new IllegalArgumentException("Cannot create todo. Missing informations.");
 		}
 
 		Task newTask = Task.of(template)
 				.withId(idService.generateId());
 
 		repo.save(newTask);
-		return Optional.of(newTask);
+		return newTask;
 	}
 
-	public Optional<Task> getById(String id) {
-		return repo.findById(id);
+	public Task getById(String id) throws TodoNotFoundException {
+		return repo.findById(id)
+				.orElseThrow(() -> new TodoNotFoundException("Todo with id " + id + "was not found."));
 	}
 
-	public Optional<Task> updateTask(String id, Task requestedTask) {
+	public Task updateTask(String id, Task requestedTask) throws TodoNotFoundException {
 		if (id == null || requestedTask == null
 				|| !id.equals(requestedTask.id()) || requestedTask.description() == null
 				|| requestedTask.description().isEmpty() || requestedTask.description().isBlank()) {
-			return Optional.empty();
+			throw new IllegalArgumentException("Cannot update todo. Missing informations.");
 		}
 		if (!repo.existsById(id)) {
-			return Optional.empty();
+			throw new TodoNotFoundException("Todo with id " + id + "was not found.");
 		}
 
 		repo.save(requestedTask);
-		return Optional.of(requestedTask);
+		return requestedTask;
 	}
 
-	public Boolean delete(String id) {
+	public void delete(String id) throws TodoNotFoundException {
 		if (id == null || id.isEmpty()
 				|| !repo.existsById(id)) {
-			return false;
+			throw new TodoNotFoundException("Todo with id " + id + "was not found.");
 		}
 
 		repo.deleteById(id);
-		return true;
 	}
 
 }
