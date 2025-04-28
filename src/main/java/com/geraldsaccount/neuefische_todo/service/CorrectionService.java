@@ -12,13 +12,13 @@ import com.geraldsaccount.neuefische_todo.model.openai.OpenAiRequest;
 import com.geraldsaccount.neuefische_todo.model.openai.OpenAiResponse;
 
 @Service
-public class ChatGptService {
+public class CorrectionService {
 	private final RestClient client;
 
 	@Value("${servers.openai.uri}")
 	private String requestUri;
 
-	public ChatGptService(RestClient.Builder builder,
+	public CorrectionService(RestClient.Builder builder,
 			@Value("${servers.openai.url}") String baseUrl,
 			@Value("${servers.openai.key}") String key) {
 		client = builder
@@ -28,7 +28,8 @@ public class ChatGptService {
 	}
 
 	public String getCorrectedText(String input) throws OpenAiException {
-		OpenAiRequest request = new OpenAiRequest("gpt-4.1", "Correct the following text for spelling and grammar.",
+		OpenAiRequest request = new OpenAiRequest("gpt-4.1",
+				"Correct the following text for spelling and grammar. Only return the corrected text.",
 				input);
 		OpenAiResponse response = client.post()
 				.uri(requestUri)

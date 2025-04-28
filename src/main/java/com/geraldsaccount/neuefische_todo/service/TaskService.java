@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.geraldsaccount.neuefische_todo.model.openai.OpenAiException;
 import com.geraldsaccount.neuefische_todo.model.tasks.Task;
 import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
@@ -12,10 +13,12 @@ import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 public class TaskService {
 	private final TaskRepo repo;
 	private final IdService idService;
+	private final CorrectionService correctionService;
 
-	public TaskService(TaskRepo repo, IdService idService) {
+	public TaskService(TaskRepo repo, IdService idService, CorrectionService chatService) {
 		this.repo = repo;
 		this.idService = idService;
+		this.correctionService = chatService;
 	}
 
 	public List<Task> getTasks() {
@@ -29,6 +32,7 @@ public class TaskService {
 		}
 
 		Task newTask = Task.of(template)
+				.withDescription(getCorrection(template.description()))
 				.withId(idService.generateId());
 
 		repo.save(newTask);
@@ -50,7 +54,8 @@ public class TaskService {
 			throw new TodoNotFoundException("Todo with id " + id + "was not found.");
 		}
 
-		repo.save(requestedTask);
+		repo.save(requestedTask
+				.withDescription(getCorrection(requestedTask.description())));
 		return requestedTask;
 	}
 
@@ -63,4 +68,15 @@ public class TaskService {
 		repo.deleteById(id);
 	}
 
+	private String getCorrection(String input) {
+		String correctedDescription = input;
+		try {
+			correctedDescription = correctionService
+					.getCorrectedText(correctedDescription);
+
+		} catch (OpenAiException e) {
+
+		}
+		return correctedDescription;
+	}
 }
