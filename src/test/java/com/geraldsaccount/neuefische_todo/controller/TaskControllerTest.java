@@ -143,7 +143,7 @@ public class TaskControllerTest {
 		mvc.perform(put("/api/todo/" + invalidTask.id())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidTask)))
-				.andExpect(status().isBadRequest());
+				.andExpect(status().isNotFound());
 	}
 
 	@Test
