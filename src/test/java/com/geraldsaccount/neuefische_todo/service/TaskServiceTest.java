@@ -19,6 +19,9 @@ import com.geraldsaccount.neuefische_todo.model.openai.OpenAiException;
 import com.geraldsaccount.neuefische_todo.model.tasks.Task;
 import com.geraldsaccount.neuefische_todo.model.tasks.TaskStatus;
 import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.undo.RedoNotPossibleException;
+import com.geraldsaccount.neuefische_todo.model.undo.UndoNotPossibleException;
+import com.geraldsaccount.neuefische_todo.model.undo.UndoableAction;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 
 public class TaskServiceTest {
@@ -99,7 +102,6 @@ public class TaskServiceTest {
 	@Test
 	void updateTask_updates_withValidData() throws TodoNotFoundException, OpenAiException {
 		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
-		when(repo.existsById(task.id())).thenReturn(true);
 		when(repo.findById(task.id())).thenReturn(Optional.of(task));
 		when(correctionService.getCorrectedText(any()))
 				.thenAnswer(a -> {
@@ -119,16 +121,12 @@ public class TaskServiceTest {
 	@Test
 	void updateTask_throwsIllegalArgument_withInvalidId() throws OpenAiException {
 		String invalidId = "T2";
-		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
-		when(repo.existsById(invalidId)).thenReturn(false);
+		Task nonExistentTask = new Task(invalidId, "initial text", TaskStatus.OPEN);
 		when(repo.findById(invalidId)).thenReturn(Optional.empty());
 
-		Task requestedtask = task.withDescription("updated text")
-				.withStatus(TaskStatus.DONE);
-
-		assertThatThrownBy(() -> service.updateTask(invalidId, requestedtask))
-				.isExactlyInstanceOf(IllegalArgumentException.class)
-				.hasMessage("Cannot update todo. Missing informations.");
+		assertThatThrownBy(() -> service.updateTask(invalidId, nonExistentTask))
+				.isExactlyInstanceOf(TodoNotFoundException.class)
+				.hasMessage("Todo with id " + invalidId + "was not found.");
 
 		verify(correctionService, never()).getCorrectedText(any());
 		verify(repo, never()).save(any());
@@ -145,7 +143,6 @@ public class TaskServiceTest {
 		assertThatThrownBy(() -> service.updateTask("T2", requestedtask));
 
 		verify(correctionService, never()).getCorrectedText(any());
-		verify(repo, never()).existsById(any());
 		verify(repo, never()).findById(any());
 		verify(repo, never()).save(any());
 	}
@@ -160,7 +157,6 @@ public class TaskServiceTest {
 
 		verify(correctionService, never()).getCorrectedText(any());
 		verify(repo, never()).findById(any());
-		verify(repo, never()).existsById(any());
 		verify(repo, never()).save(any());
 	}
 
@@ -178,10 +174,74 @@ public class TaskServiceTest {
 	@Test
 	void deleteTask_throwsTodoNotFound_withInvalidId() {
 		String invalidId = "T1";
-		when(repo.existsById(invalidId)).thenReturn(false);
+		when(repo.findById(invalidId)).thenReturn(Optional.empty());
+
 		assertThatThrownBy(() -> service.delete(invalidId))
 				.isInstanceOf(TodoNotFoundException.class)
 				.hasMessage("Todo with id " + invalidId + "was not found.");
 		verify(repo, never()).deleteById(any());
+	}
+
+	@Test
+	void undo_undosAction_withActionInHistory() throws UndoNotPossibleException {
+		UndoableAction undoAction = mock(UndoableAction.class);
+		service.addCommand(undoAction);
+
+		service.undo();
+
+		verify(undoAction).undo();
+	}
+
+	@Test
+	void undo_throwsUndoNotPossible_withEmptyHistory() {
+		assertThatThrownBy(() -> service.undo())
+				.isInstanceOf(UndoNotPossibleException.class)
+				.hasMessage("No action left to undo.");
+	}
+
+	@Test
+	void undo_throwsUndoNotPossible_whenOutOfActionsInHistory() throws UndoNotPossibleException {
+		UndoableAction undoAction = mock(UndoableAction.class);
+		service.addCommand(undoAction);
+
+		service.undo();
+		assertThatThrownBy(() -> service.undo())
+				.isInstanceOf(UndoNotPossibleException.class)
+				.hasMessage("No action left to undo.");
+
+		verify(undoAction).undo();
+	}
+
+	@Test
+	void redo_redosAction_withActionInHistory() throws UndoNotPossibleException, RedoNotPossibleException {
+		UndoableAction undoAction = mock(UndoableAction.class);
+		service.addCommand(undoAction);
+
+		service.undo();
+		service.redo();
+
+		verify(undoAction).redo();
+	}
+
+	@Test
+	void redo_throwsRedoNotPossible_withEmptyHistory() {
+		assertThatThrownBy(() -> service.redo())
+				.isInstanceOf(RedoNotPossibleException.class)
+				.hasMessage("No action left to redo.");
+	}
+
+	@Test
+	void redo_throwsRedoNotPossible_whenOutOfActionsInHistory()
+			throws RedoNotPossibleException, UndoNotPossibleException {
+		UndoableAction undoAction = mock(UndoableAction.class);
+		service.addCommand(undoAction);
+
+		service.undo();
+		service.redo();
+		assertThatThrownBy(() -> service.redo())
+				.isInstanceOf(RedoNotPossibleException.class)
+				.hasMessage("No action left to redo.");
+
+		verify(undoAction).redo();
 	}
 }
