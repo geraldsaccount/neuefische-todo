@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,41 +53,44 @@ public class TaskServiceTest {
 
 		Task expected = Task.of(dto).withId(id);
 		assertThat(service.createTask(dto))
-				.isNotEmpty()
-				.hasValue(expected);
+				.isEqualTo(expected);
 
 		verify(repo).save(expected);
 	}
 
 	@Test
-	void createTask_returnsEmpty_withInvalidDto() {
+	void createTask_throwsInvalidArgument_withInvalidDto() {
 		TaskDTO dto = new TaskDTO("", TaskStatus.OPEN);
 
-		assertThat(service.createTask(dto))
-				.isEmpty();
+		assertThatThrownBy(() -> service.createTask(dto))
+				.isExactlyInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Cannot create todo. Missing informations.");
 
 		verify(idService, never()).generateId();
 		verify(repo, never()).save(any());
 	}
 
 	@Test
-	void getById_returnsEmpty_withInvalidId() {
+	void getById_throwsTodoNotFound_withInvalidId() {
 		String invalidId = "T1";
 		when(repo.findById(invalidId)).thenReturn(Optional.empty());
 
-		assertThat(service.getById(invalidId)).isEmpty();
+		assertThatThrownBy(() -> service.getById(invalidId))
+				.isExactlyInstanceOf(TodoNotFoundException.class)
+				.hasMessage("Todo with id " + invalidId + "was not found.");
 	}
 
 	@Test
-	void getById_returnsTask_withValidId() {
+	void getById_returnsTask_withValidId() throws TodoNotFoundException {
 		Task task = new Task("T1", "Test getting tasks by id", TaskStatus.OPEN);
 		when(repo.findById(task.id())).thenReturn(Optional.of(task));
 
-		assertThat(service.getById(task.id())).contains(task);
+		assertThat(service.getById(task.id()))
+				.isEqualTo(task);
 	}
 
 	@Test
-	void updateTask_updates_withValidData() {
+	void updateTask_updates_withValidData() throws TodoNotFoundException {
 		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
 		when(repo.existsById(task.id())).thenReturn(true);
 
@@ -94,66 +98,71 @@ public class TaskServiceTest {
 				.withStatus(TaskStatus.DONE);
 
 		assertThat(service.updateTask(task.id(), requestedtask))
-				.isNotEmpty()
-				.hasValue(requestedtask);
+				.isEqualTo(requestedtask);
 
 		verify(repo, times(1))
 				.save(requestedtask);
 	}
 
 	@Test
-	void updateTask_stopsProcess_withInvalidId() {
+	void updateTask_throwsIllegalArgument_withInvalidId() {
+		String invalidId = "T2";
 		Task task = new Task("T1", "initial text", TaskStatus.OPEN);
-		when(repo.existsById("T2")).thenReturn(false);
+		when(repo.existsById(invalidId)).thenReturn(false);
 
 		Task requestedtask = task.withDescription("updated text")
 				.withStatus(TaskStatus.DONE);
 
-		assertThat(service.updateTask("T2", requestedtask))
-				.isEmpty();
+		assertThatThrownBy(() -> service.updateTask(invalidId, requestedtask))
+				.isExactlyInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Cannot update todo. Missing informations.");
 
 		verify(repo, never()).save(any());
 	}
 
 	@Test
-	void updateTask_stopsProcess_withEmptyDescription() {
+	void updateTask_throwsIllegalArgument_withEmptyDescription() {
 		Task requestedtask = new Task("T1", "", TaskStatus.OPEN);
 
-		assertThat(service.updateTask("T2", requestedtask))
-				.isEmpty();
+		assertThatThrownBy(() -> service.updateTask("T2", requestedtask))
+				.isExactlyInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Cannot update todo. Missing informations.");
+
+		assertThatThrownBy(() -> service.updateTask("T2", requestedtask));
 
 		verify(repo, never()).existsById(any());
 		verify(repo, never()).save(any());
 	}
 
 	@Test
-	void updateTask_stopsProcess_withMisMatchingId() {
+	void updateTask_throwsIllegalArgument_withMisMatchingId() {
 		Task requestedtask = new Task("T1", "initial text", TaskStatus.OPEN);
 
-		assertThat(service.updateTask("T2", requestedtask))
-				.isEmpty();
+		assertThatThrownBy(() -> service.updateTask("T2", requestedtask))
+				.isExactlyInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Cannot update todo. Missing informations.");
 
 		verify(repo, never()).existsById(any());
 		verify(repo, never()).save(any());
 	}
 
 	@Test
-	void deleteTask_deletes_withValidId() {
+	void deleteTask_deletes_withValidId() throws TodoNotFoundException {
 		String id = "T1";
 		when(repo.existsById(id)).thenReturn(true);
 
-		assertThat(service.delete(id)).isTrue();
+		service.delete(id);
 
 		verify(repo, times(1)).deleteById(id);
 	}
 
 	@Test
-	void deleteTask_stopsProcess_withInvalidId() {
+	void deleteTask_throwsTodoNotFound_withInvalidId() {
 		String invalidId = "T1";
 		when(repo.existsById(invalidId)).thenReturn(false);
-
-		assertThat(service.delete(invalidId)).isFalse();
-
+		assertThatThrownBy(() -> service.delete(invalidId))
+				.isInstanceOf(TodoNotFoundException.class)
+				.hasMessage("Todo with id " + invalidId + "was not found.");
 		verify(repo, never()).deleteById(any());
 	}
 }

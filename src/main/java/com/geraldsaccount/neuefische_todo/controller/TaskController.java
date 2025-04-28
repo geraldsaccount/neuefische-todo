@@ -44,13 +44,14 @@ public class TaskController {
 
 	@PostMapping
 	@SuppressWarnings("unused")
-	private Task postTask(@RequestBody final TaskDTO dto) {
+	@ResponseStatus(HttpStatus.CREATED)
+	private Task postTask(@RequestBody final TaskDTO dto) throws IllegalArgumentException {
 		return service.createTask(dto);
 	}
 
 	@PutMapping("/{id}")
 	public Task putUpdateTask(@PathVariable String id, @RequestBody Task requestedTask)
-			throws TodoNotFoundException {
+			throws TodoNotFoundException, IllegalArgumentException {
 		return service.updateTask(id, requestedTask);
 	}
 
