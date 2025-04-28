@@ -18,9 +18,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.geraldsaccount.neuefische_todo.model.Task;
-import com.geraldsaccount.neuefische_todo.model.TaskStatus;
-import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.tasks.Task;
+import com.geraldsaccount.neuefische_todo.model.tasks.TaskStatus;
+import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 
 @SpringBootTest

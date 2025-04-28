@@ -15,9 +15,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.geraldsaccount.neuefische_todo.model.Task;
-import com.geraldsaccount.neuefische_todo.model.TaskStatus;
-import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.tasks.Task;
+import com.geraldsaccount.neuefische_todo.model.tasks.TaskStatus;
+import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 
 public class TaskServiceTest {

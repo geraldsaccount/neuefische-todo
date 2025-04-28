@@ -1,4 +1,4 @@
-package com.geraldsaccount.neuefische_todo.model.dto;
+package com.geraldsaccount.neuefische_todo.model.error;
 
 import java.time.Instant;
 

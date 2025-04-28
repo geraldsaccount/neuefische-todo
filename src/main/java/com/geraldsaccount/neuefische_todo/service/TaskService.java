@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.geraldsaccount.neuefische_todo.model.Task;
-import com.geraldsaccount.neuefische_todo.model.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.tasks.Task;
+import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 
 @Service
