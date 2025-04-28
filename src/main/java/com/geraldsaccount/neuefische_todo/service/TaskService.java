@@ -11,6 +11,8 @@ import com.geraldsaccount.neuefische_todo.model.tasks.Task;
 import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.model.undo.CreateTaskAction;
 import com.geraldsaccount.neuefische_todo.model.undo.DeleteTaskAction;
+import com.geraldsaccount.neuefische_todo.model.undo.RedoNotPossibleException;
+import com.geraldsaccount.neuefische_todo.model.undo.UndoNotPossibleException;
 import com.geraldsaccount.neuefische_todo.model.undo.UndoableAction;
 import com.geraldsaccount.neuefische_todo.model.undo.UpdateTaskAction;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
@@ -63,10 +65,12 @@ public class TaskService {
 				|| requestedTask.description().isEmpty() || requestedTask.description().isBlank()) {
 			throw new IllegalArgumentException("Cannot update todo. Missing informations.");
 		}
-		if (!repo.existsById(id)) {
+
+		Optional<Task> foundTask = repo.findById(id);
+		if (foundTask.isEmpty()) {
 			throw new TodoNotFoundException("Todo with id " + id + "was not found.");
 		}
-		Optional<Task> foundTask = repo.findById(id);
+
 		Task beforeTask = foundTask.get();
 		addCommand(new UpdateTaskAction(repo, requestedTask, beforeTask));
 		repo.save(requestedTask
@@ -75,10 +79,11 @@ public class TaskService {
 	}
 
 	public void delete(String id) throws TodoNotFoundException {
-		if (id == null || id.isEmpty()) {
+		Optional<Task> toDelete = repo.findById(id);
+		if (id == null || id.isEmpty()
+				|| toDelete.isEmpty()) {
 			throw new TodoNotFoundException("Todo with id " + id + "was not found.");
 		}
-		Optional<Task> toDelete = repo.findById(id);
 
 		addCommand(new DeleteTaskAction(repo, toDelete.get()));
 
@@ -97,7 +102,7 @@ public class TaskService {
 		return correctedDescription;
 	}
 
-	private void addCommand(UndoableAction command) {
+	public void addCommand(UndoableAction command) {
 		if (currentActionIndex == commandHistory.size()) {
 			commandHistory.add(command);
 			currentActionIndex = commandHistory.size();
@@ -109,22 +114,20 @@ public class TaskService {
 		currentActionIndex = commandHistory.size();
 	}
 
-	public boolean undo() {
+	public void undo() throws UndoNotPossibleException {
 		if (currentActionIndex == 0) {
-			return false;
+			throw new UndoNotPossibleException("No action left to undo.");
 		}
 		currentActionIndex--;
 		commandHistory.get(currentActionIndex).undo();
-		return true;
 	}
 
-	public boolean redo() {
+	public void redo() throws RedoNotPossibleException {
 		if (currentActionIndex >= commandHistory.size()) {
-			return false;
+			throw new RedoNotPossibleException("No action left to redo.");
 		}
 		commandHistory.get(currentActionIndex).redo();
 		currentActionIndex++;
-		return true;
 	}
 
 }
