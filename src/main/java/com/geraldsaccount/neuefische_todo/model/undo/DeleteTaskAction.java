@@ -2,7 +2,7 @@ package com.geraldsaccount.neuefische_todo.model.undo;
 
 import java.util.Optional;
 
-import com.geraldsaccount.neuefische_todo.model.Task;
+import com.geraldsaccount.neuefische_todo.model.tasks.Task;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
 
 public class DeleteTaskAction implements UndoableAction {
