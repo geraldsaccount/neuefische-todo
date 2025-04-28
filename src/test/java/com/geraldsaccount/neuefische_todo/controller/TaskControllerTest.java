@@ -3,11 +3,15 @@ package com.geraldsaccount.neuefische_todo.controller;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,11 +26,15 @@ import com.geraldsaccount.neuefische_todo.model.tasks.Task;
 import com.geraldsaccount.neuefische_todo.model.tasks.TaskStatus;
 import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
 import com.geraldsaccount.neuefische_todo.repository.TaskRepo;
+import com.geraldsaccount.neuefische_todo.service.CorrectionService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD) // needed to reset mvc before each test
 public class TaskControllerTest {
+
+	@Value("${servers.openai.uri}")
+	private String uri;
 
 	@Autowired
 	private TaskRepo repo;
@@ -36,6 +44,9 @@ public class TaskControllerTest {
 
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@MockitoBean
+	private CorrectionService correctionService;
 
 	@Test
 	void getTasks_returnsTasks_whenCalled() throws Exception {
@@ -51,6 +62,11 @@ public class TaskControllerTest {
 	void postTask_returnsTask_withValidDto() throws Exception {
 		TaskDTO dto = new TaskDTO("this should become a task", TaskStatus.IN_PROGRESS);
 		String jsonDto = objectMapper.writeValueAsString(dto);
+
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
 
 		mvc.perform(post("/api/todo")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -91,6 +107,11 @@ public class TaskControllerTest {
 
 	@Test
 	void putTask_updatesTask_withValidData() throws Exception {
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
+
 		Task task = new Task("T1", "text before", TaskStatus.OPEN);
 		repo.save(task);
 
