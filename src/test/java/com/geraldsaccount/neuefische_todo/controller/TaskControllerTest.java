@@ -2,11 +2,11 @@ package com.geraldsaccount.neuefische_todo.controller;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geraldsaccount.neuefische_todo.model.tasks.Task;
 import com.geraldsaccount.neuefische_todo.model.tasks.TaskStatus;
@@ -32,9 +33,7 @@ import com.geraldsaccount.neuefische_todo.service.CorrectionService;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD) // needed to reset mvc before each test
 public class TaskControllerTest {
-
-	@Value("${servers.openai.uri}")
-	private String uri;
+	private final String uri = "/api/todo";
 
 	@Autowired
 	private TaskRepo repo;
@@ -48,16 +47,19 @@ public class TaskControllerTest {
 	@MockitoBean
 	private CorrectionService correctionService;
 
+	// region getTasks
 	@Test
 	void getTasks_returnsTasks_whenCalled() throws Exception {
 		Task task = new Task("T1", "this should return", TaskStatus.DONE);
 		repo.save(task);
 
-		mvc.perform(get("/api/todo"))
+		mvc.perform(get(uri))
 				.andExpect(status().isOk())
 				.andExpect(content().json(objectMapper.writeValueAsString(List.of(task))));
 	}
+	// endregion
 
+	// region post
 	@Test
 	void postTask_returnsTask_withValidDto() throws Exception {
 		TaskDTO dto = new TaskDTO("this should become a task", TaskStatus.IN_PROGRESS);
@@ -68,7 +70,7 @@ public class TaskControllerTest {
 					return a.getArgument(0);
 				});
 
-		mvc.perform(post("/api/todo")
+		mvc.perform(post(uri)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(jsonDto))
 				.andExpect(status().isCreated())
@@ -80,18 +82,21 @@ public class TaskControllerTest {
 	void postTask_returnsBadRequest_withInvalidDto() throws Exception {
 		TaskDTO dto = new TaskDTO(null, TaskStatus.IN_PROGRESS);
 
-		mvc.perform(post("/api/todo")
+		mvc.perform(post(uri)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(dto)))
 				.andExpect(status().isBadRequest());
 	}
 
+	// endregion
+
+	// region getById
 	@Test
 	void getById_returnsNotFound_withInvalidId() throws Exception {
 		Task task = new Task("T1", "should not be found", TaskStatus.OPEN);
 		repo.save(task);
 
-		mvc.perform(get("/api/todo/T2"))
+		mvc.perform(get(uri + "/T2"))
 				.andExpect(status().isNotFound());
 	}
 
@@ -100,11 +105,14 @@ public class TaskControllerTest {
 		Task task = new Task("T1", "should be found", TaskStatus.OPEN);
 		repo.save(task);
 
-		mvc.perform(get("/api/todo/" + task.id()))
+		mvc.perform(get(uri + "/" + task.id()))
 				.andExpect(status().isOk())
 				.andExpect(content().json(objectMapper.writeValueAsString(task)));
 	}
 
+	// endregion
+
+	// region updateTask
 	@Test
 	void putTask_updatesTask_withValidData() throws Exception {
 		when(correctionService.getCorrectedText(any()))
@@ -120,7 +128,7 @@ public class TaskControllerTest {
 				.withStatus(TaskStatus.DONE);
 
 		String jsonUpdatedTask = objectMapper.writeValueAsString(updatedTask);
-		mvc.perform(put("/api/todo/" + task.id())
+		mvc.perform(put(uri + "/" + task.id())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(jsonUpdatedTask))
 				.andExpect(status().isOk())
@@ -134,7 +142,7 @@ public class TaskControllerTest {
 
 		Task invalidTask = task.withDescription("");
 
-		mvc.perform(put("/api/todo/" + task.id())
+		mvc.perform(put(uri + "/" + task.id())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidTask)))
 				.andExpect(status().isBadRequest());
@@ -142,13 +150,14 @@ public class TaskControllerTest {
 
 	@Test
 	void putTask_returnsBadRequest_withMismatchingIds() throws Exception {
+		String mismatchingId = "T2";
 		Task task = new Task("T1", "text before", TaskStatus.OPEN);
 		repo.save(task);
-		repo.save(task.withId("T2"));
+		repo.save(task.withId(mismatchingId));
 
-		Task invalidTask = task.withId("T2");
+		Task invalidTask = task.withId(mismatchingId);
 
-		mvc.perform(put("/api/todo/" + task.id())
+		mvc.perform(put(uri + "/" + task.id())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidTask)))
 				.andExpect(status().isBadRequest());
@@ -161,24 +170,100 @@ public class TaskControllerTest {
 
 		Task invalidTask = task.withId("T2");
 
-		mvc.perform(put("/api/todo/" + invalidTask.id())
+		mvc.perform(put(uri + "/" + invalidTask.id())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidTask)))
 				.andExpect(status().isNotFound());
 	}
+	// endregion
 
+	// region delete
 	@Test
 	void deleteTask_returnsOk_withValidId() throws Exception {
 		Task task = new Task("T1", "to be deleted", TaskStatus.OPEN);
 		repo.save(task);
 
-		mvc.perform(delete("/api/todo/" + task.id()))
+		mvc.perform(delete(uri + "/" + task.id()))
 				.andExpect(status().isNoContent());
 	}
 
 	@Test
 	void deleteTask_returnsNotFound_withInvalidId() throws Exception {
-		mvc.perform(delete("/api/todo/T1"))
+		mvc.perform(delete(uri + "/T1"))
 				.andExpect(status().isNotFound());
 	}
+	// endregion
+
+	// region undo
+	@Test
+	void undo_resetsState_withActionsToReset() throws JsonProcessingException, Exception {
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
+
+		TaskDTO task = new TaskDTO("this task should be deleted", TaskStatus.DONE);
+		mvc.perform(post(uri)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(task)))
+				.andExpect(status().isCreated());
+
+		mvc.perform(put(uri + "/undo"))
+				.andExpect(status().isOk());
+
+		List<Task> state = repo.findAll();
+
+		assertThat(state).isEmpty();
+	}
+
+	@Test
+	void undo_returnsBadRequest_withEmptyHistory() throws JsonProcessingException, Exception {
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
+
+		mvc.perform(put(uri + "/undo"))
+				.andExpect(status().isBadRequest());
+	}
+	// endregion
+
+	// region redo
+	@Test
+	void redo_resetsState_withActionToReset() throws JsonProcessingException, Exception {
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
+
+		TaskDTO task = new TaskDTO("this task should be deleted", TaskStatus.DONE);
+
+		mvc.perform(post(uri)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(task)))
+				.andExpect(status().isCreated());
+		List<Task> oldState = repo.findAll();
+
+		mvc.perform(put(uri + "/undo"))
+				.andExpect(status().isOk());
+		mvc.perform(put(uri + "/redo"))
+				.andExpect(status().isOk());
+
+		List<Task> state = repo.findAll();
+
+		assertThat(state)
+				.containsExactlyInAnyOrderElementsOf(oldState);
+	}
+
+	@Test
+	void redo_returnsBadRequest_withEndOfHistory() throws JsonProcessingException, Exception {
+		when(correctionService.getCorrectedText(any()))
+				.thenAnswer(a -> {
+					return a.getArgument(0);
+				});
+
+		mvc.perform(put(uri + "/redo"))
+				.andExpect(status().isBadRequest());
+	}
+	// endregion
 }
