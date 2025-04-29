@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "servers.openai.key",
+      "type": "java.lang.String",
+      "description": "A description for 'servers.openai.key'"
+    },
+    {
+      "name": "servers.openai.url",
+      "type": "java.lang.String",
+      "description": "A description for 'servers.openai.key'"
+    }
+  ]
+}
