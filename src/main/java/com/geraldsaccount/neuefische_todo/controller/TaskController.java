@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.geraldsaccount.neuefische_todo.model.error.ErrorDTO;
 import com.geraldsaccount.neuefische_todo.model.tasks.Task;
 import com.geraldsaccount.neuefische_todo.model.tasks.dto.TaskDTO;
+import com.geraldsaccount.neuefische_todo.model.undo.RedoNotPossibleException;
+import com.geraldsaccount.neuefische_todo.model.undo.UndoNotPossibleException;
 import com.geraldsaccount.neuefische_todo.service.TaskService;
 import com.geraldsaccount.neuefische_todo.service.TodoNotFoundException;
 
@@ -65,5 +67,29 @@ public class TaskController {
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ErrorDTO handleTodoNotFoundException(TodoNotFoundException e) {
 		return new ErrorDTO(HttpStatus.NOT_FOUND, e.getMessage());
+	}
+
+	@PutMapping("/undo")
+	public ResponseEntity<Void> undo() throws UndoNotPossibleException {
+		service.undo();
+		return ResponseEntity.ok().build();
+	}
+
+	@PutMapping("/redo")
+	public ResponseEntity<Void> redo() throws RedoNotPossibleException {
+		service.redo();
+		return ResponseEntity.ok().build();
+	}
+
+	@ExceptionHandler(UndoNotPossibleException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ErrorDTO handleUndoException(UndoNotPossibleException e) {
+		return new ErrorDTO(HttpStatus.BAD_REQUEST, e.getMessage());
+	}
+
+	@ExceptionHandler(RedoNotPossibleException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ErrorDTO handleRedoException(RedoNotPossibleException e) {
+		return new ErrorDTO(HttpStatus.BAD_REQUEST, e.getMessage());
 	}
 }
