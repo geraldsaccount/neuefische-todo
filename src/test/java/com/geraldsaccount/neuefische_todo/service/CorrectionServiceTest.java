@@ -3,7 +3,6 @@ package com.geraldsaccount.neuefische_todo.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -20,10 +19,6 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 @AutoConfigureMockMvc
 @WireMockTest(httpPort = 8089)
 public class CorrectionServiceTest {
-
-	@Value("${servers.openai.uri}")
-	private String uri;
-
 	@Autowired
 	private ObjectMapper mapper;
 
@@ -35,7 +30,8 @@ public class CorrectionServiceTest {
 		String misspelledText = "i are not hungri. me olredi eat.";
 		String correctedText = "I am not hungry. I already ate.";
 		OpenAiResponse response = OpenAiResponse.ofResponse(correctedText);
-		WireMock.stubFor(WireMock.post(uri)
+
+		WireMock.stubFor(WireMock.post(CorrectionService.REQUEST_URI)
 				.willReturn(WireMock.ok()
 						.withHeader("Content-Type", "application/json")
 						.withBody(mapper.writeValueAsString(response))));

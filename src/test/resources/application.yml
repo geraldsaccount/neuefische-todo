@@ -7,5 +7,4 @@ de:
 servers:
   openai:
     url: http://localhost:8089
-    uri: /v1/responses
     key: test-key

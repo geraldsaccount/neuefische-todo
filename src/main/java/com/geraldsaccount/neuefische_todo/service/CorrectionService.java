@@ -15,8 +15,7 @@ import com.geraldsaccount.neuefische_todo.model.openai.OpenAiResponse;
 public class CorrectionService {
 	private final RestClient client;
 
-	@Value("${servers.openai.uri}")
-	private String requestUri;
+	public static final String REQUEST_URI = "/v1/responses";
 
 	public CorrectionService(RestClient.Builder builder,
 			@Value("${servers.openai.url}") String baseUrl,
@@ -32,7 +31,7 @@ public class CorrectionService {
 				"Correct the following text for spelling and grammar. Only return the corrected text.",
 				input);
 		OpenAiResponse response = client.post()
-				.uri(requestUri)
+				.uri(REQUEST_URI)
 				.contentType(MediaType.APPLICATION_JSON)
 				.body(request)
 				.retrieve()

@@ -7,5 +7,4 @@ spring:
 servers:
   openai:
     url: https://api.openai.com
-    uri: /v1/responses
     key: ${OPENAI_KEY}
