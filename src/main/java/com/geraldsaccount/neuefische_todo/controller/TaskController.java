@@ -69,13 +69,13 @@ public class TaskController {
 		return new ErrorDTO(HttpStatus.NOT_FOUND, e.getMessage());
 	}
 
-	@GetMapping("/undo")
+	@PutMapping("/undo")
 	public ResponseEntity<Void> undo() throws UndoNotPossibleException {
 		service.undo();
 		return ResponseEntity.ok().build();
 	}
 
-	@GetMapping("/redo")
+	@PutMapping("/redo")
 	public ResponseEntity<Void> redo() throws RedoNotPossibleException {
 		service.redo();
 		return ResponseEntity.ok().build();
